@@ -36,47 +36,39 @@ footer strong{color:var(--navy);display:block}
 .zoom{display:none;position:fixed;inset:0;background:rgba(15,23,42,.92);z-index:9;align-items:center;justify-content:center;padding:16px}
 .zoom.on{display:flex}
 .zoom img{max-width:100%;max-height:90vh;border-radius:10px}
-@media (max-width:600px){ .viewer{height:300px} footer{justify-content:center;text-align:center} }
+@media (max-width:600px){.viewer{height:300px}footer{justify-content:center;text-align:center}}
 </style>
 </head>
 <body>
 <div class="wrap"><div class="card">
-  <header><h1>🦷 Diagnóstico Digital 3D</h1><p>Informe clínico personalizado e interactivo</p></header>
-  <div class="body">
-    <div class="info">
-      <div><label>Paciente</label><span id="pac">Cargando...</span></div>
-      <div><label>Fecha de escaneo</label><span id="fecha">--</span></div>
-      <div><label>Tecnología</label><span>Escáner intraoral Straumann</span></div>
-    </div>
-
-    <h2>🌐 Su modelo dental 3D</h2>
-    <div class="viewer">
-      <canvas id="c3d"></canvas>
-      <div class="status" id="st">Cargando modelo...</div>
-      <div class="tip">Arrastre para girar · Pellizque o rueda para zoom</div>
-    </div>
-
-    <h2>📋 Resumen para usted</h2>
-    <div class="summary"><h3>Estimado(a) paciente:</h3><p id="resumen">Cargando...</p></div>
-
-    <h2>🔍 Capturas y hallazgos</h2>
-    <div class="grid" id="galeria"></div>
-
-    <footer>
-      <div><span>Clínica Odontológica Especializada</span><br><small>Diagnóstico Digital 3D</small></div>
-      <div style="text-align:right"><strong id="doc"></strong><span id="cop"></span></div>
-    </footer>
-  </div>
+<header><h1>🦷 Diagnóstico Digital 3D</h1><p>Informe clínico personalizado e interactivo</p></header>
+<div class="body">
+<div class="info">
+<div><label>Paciente</label><span id="pac">Cargando...</span></div>
+<div><label>Fecha de escaneo</label><span id="fecha">--</span></div>
+<div><label>Tecnología</label><span>Escáner intraoral Straumann</span></div>
+</div>
+<h2>🌐 Su modelo dental 3D</h2>
+<div class="viewer">
+<canvas id="c3d"></canvas>
+<div class="status" id="st">Cargando modelo...</div>
+<div class="tip">Arrastre para girar · Pellizque o rueda para zoom</div>
+</div>
+<h2>📋 Resumen para usted</h2>
+<div class="summary"><h3>Estimado(a) paciente:</h3><p id="resumen">Cargando...</p></div>
+<h2>🔍 Capturas y hallazgos</h2>
+<div class="grid" id="galeria"></div>
+<footer>
+<div><span>Clínica Odontológica Especializada</span><br><small>Diagnóstico Digital 3D</small></div>
+<div style="text-align:right"><strong id="doc"></strong><span id="cop"></span></div>
+</footer>
+</div>
 </div></div>
-
 <div class="zoom" id="zoom" onclick="this.classList.remove('on')"><img id="zoomImg" alt=""></div>
-
 <script>
 const $ = id => document.getElementById(id);
 const pid = new URLSearchParams(location.search).get('id');
 const UUID = /^[0-9a-f-]{36}$/i;
-
-// Visor 3D
 const canvas = $('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -90,94 +82,101 @@ scene.add(sun);
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-
+let modelo = null;
+let autoRotate = true;
+let reanudarTimer = null;
+// Pausa el giro mientras el paciente toca el modelo y lo reanuda después
+controls.addEventListener('start', () => {
+ autoRotate = false;
+ clearTimeout(reanudarTimer);
+});
+controls.addEventListener('end', () => {
+ clearTimeout(reanudarTimer);
+ reanudarTimer = setTimeout(() => autoRotate = true, 4000);
+});
 function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = (w / h) || 1;
-  camera.updateProjectionMatrix();
+ const w = canvas.clientWidth, h = canvas.clientHeight;
+ renderer.setSize(w, h, false);
+ camera.aspect = (w / h) || 1;
+ camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
 resize();
-(function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
-
+(function loop() {
+ requestAnimationFrame(loop);
+ if (autoRotate && modelo) modelo.rotation.y += 0.005;
+ controls.update();
+ renderer.render(scene, camera);
+})();
 function mostrarModelo(geo) {
-  geo.computeBoundingSphere();
-  const s = geo.boundingSphere, r = s.radius || 1;
-  geo.translate(-s.center.x, -s.center.y, -s.center.z);
-  const hasColor = !!geo.attributes.color;
-  let obj;
-  if (!geo.index) {
-    obj = new THREE.Points(geo, new THREE.PointsMaterial({
-      size: r * 0.015, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x0284c7
-    }));
-  } else {
-    geo.computeVertexNormals();
-    obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-      vertexColors: hasColor, color: hasColor ? 0xffffff : 0xe2e8f0, roughness: 0.35
-    }));
-  }
-  scene.add(obj);
-  const d = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
-  camera.near = r / 100;
-  camera.far = d * 10;
-  camera.position.set(0, 0, d * 1.1);
-  camera.updateProjectionMatrix();
-  controls.target.set(0, 0, 0);
-  controls.update();
+ geo.computeBoundingSphere();
+ const s = geo.boundingSphere, r = s.radius || 1;
+ geo.translate(-s.center.x, -s.center.y, -s.center.z);
+ const hasColor = !!geo.attributes.color;
+ let obj;
+ if (!geo.index) {
+ obj = new THREE.Points(geo, new THREE.PointsMaterial({ size: r * 0.015, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x0284c7 }));
+ } else {
+ geo.computeVertexNormals();
+ obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xe2e8f0, roughness: 0.35 }));
+ }
+ modelo = obj;
+ scene.add(obj);
+ const d = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
+ camera.near = r / 100;
+ camera.far = d * 10;
+ camera.position.set(0, 0, d * 1.1);
+ camera.updateProjectionMatrix();
+ controls.target.set(0, 0, 0);
+ controls.update();
 }
-
-// Galería
 function pintarGaleria(d) {
-  const g = $('galeria');
-  [1, 2, 3].forEach(n => {
-    if (!d.images[n - 1]) return;
-    const fig = document.createElement('div');
-    fig.className = 'item';
-    const img = document.createElement('img');
-    img.src = `/api/pacientes/${pid}/img/${n}`;
-    img.alt = 'Captura ' + n;
-    img.onclick = () => { $('zoomImg').src = img.src; $('zoom').classList.add('on'); };
-    const p = document.createElement('p');
-    const s = document.createElement('strong');
-    s.textContent = 'Hallazgo ' + n + ': ';
-    p.append(s, document.createTextNode(d['desc' + n] || ''));
-    fig.append(img, p);
-    g.append(fig);
-  });
+ const g = $('galeria');
+ [1, 2, 3].forEach(n => {
+ if (!d.images[n - 1]) return;
+ const fig = document.createElement('div');
+ fig.className = 'item';
+ const img = document.createElement('img');
+ img.src = '/api/pacientes/' + pid + '/img/' + n;
+ img.alt = 'Captura ' + n;
+ img.onclick = () => { $('zoomImg').src = img.src; $('zoom').classList.add('on'); };
+ const p = document.createElement('p');
+ const s = document.createElement('strong');
+ s.textContent = 'Hallazgo ' + n + ': ';
+ p.append(s, document.createTextNode(d['desc' + n] || ''));
+ fig.append(img, p);
+ g.append(fig);
+ });
 }
-
 async function cargar() {
-  const r = await fetch(`/api/pacientes/${pid}`);
-  if (!r.ok) {
-    $('st').textContent = 'Enlace no válido';
-    $('resumen').textContent = 'Este enlace no es válido o ha expirado.';
-    return;
-  }
-  const d = await r.json();
-  $('pac').textContent = d.nombre;
-  $('fecha').textContent = d.fecha ? new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-PE') : '--';
-  $('resumen').textContent = d.resumen || '';
-  $('doc').textContent = d.docNombre || '';
-  $('cop').textContent = d.docCOP || '';
-  pintarGaleria(d);
-
-  if (!d.hasModel) { $('st').textContent = 'Sin modelo 3D'; return; }
-  try {
-    const buf = await (await fetch(`/api/pacientes/${pid}/model`)).arrayBuffer();
-    mostrarModelo(new THREE.PLYLoader().parse(buf));
-    $('st').textContent = 'Modelo cargado';
-    setTimeout(() => $('st').style.display = 'none', 1500);
-  } catch (e) {
-    $('st').textContent = 'No se pudo mostrar el modelo';
-  }
+ const r = await fetch('/api/pacientes/' + pid);
+ if (!r.ok) {
+ $('st').textContent = 'Enlace no válido';
+ $('resumen').textContent = 'Este enlace no es válido o ha expirado.';
+ return;
+ }
+ const d = await r.json();
+ $('pac').textContent = d.nombre;
+ $('fecha').textContent = d.fecha ? new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-PE') : '--';
+ $('resumen').textContent = d.resumen || '';
+ $('doc').textContent = d.docNombre || '';
+ $('cop').textContent = d.docCOP || '';
+ pintarGaleria(d);
+ if (!d.hasModel) { $('st').textContent = 'Sin modelo 3D'; return; }
+ try {
+ const buf = await (await fetch('/api/pacientes/' + pid + '/model')).arrayBuffer();
+ mostrarModelo(new THREE.PLYLoader().parse(buf));
+ $('st').textContent = 'Modelo cargado';
+ setTimeout(() => $('st').style.display = 'none', 1500);
+ } catch (e) {
+ $('st').textContent = 'No se pudo mostrar el modelo';
+ }
 }
-
 if (!pid || !UUID.test(pid)) {
-  $('st').textContent = 'Enlace no válido';
-  $('resumen').textContent = 'Este enlace no es válido o ha expirado.';
+ $('st').textContent = 'Enlace no válido';
+ $('resumen').textContent = 'Este enlace no es válido o ha expirado.';
 } else {
-  cargar().catch(() => { $('st').textContent = 'Error al cargar'; });
+ cargar().catch(() => { $('st').textContent = 'Error al cargar'; });
 }
 </script>
 </body>
