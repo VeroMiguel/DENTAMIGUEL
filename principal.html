@@ -4,56 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diagnóstico Digital 3D — Panel Principal</title>
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
-
   <style>
-    :root {
-      --primary: #0284c7;
-      --primary-dark: #0369a1;
-      --navy: #0f172a;
-      --text: #334155;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --success: #25d366;
-    }
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-    .app-container { max-width: 1100px; margin: 0 auto; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid var(--border); overflow: hidden; }
-    .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-    .header-titles h1 { margin: 0; font-size: 1.5rem; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-    .header-titles p { margin: 4px 0 0 0; color: #94a3b8; font-size: 0.9rem; }
-    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 25px; }
-    @media (max-width: 850px) { .main-grid { grid-template-columns: 1fr; padding: 15px; } }
-    .viewer-card { background: #f1f5f9; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-    .viewer-header { background: #e2e8f0; padding: 10px 15px; font-weight: 700; font-size: 0.9rem; color: var(--navy); display: flex; justify-content: space-between; align-items: center; }
-    #canvas3D { width: 100%; height: 380px; background: radial-gradient(circle, #ffffff 0%, #cbd5e1 100%); display: block; }
-    .viewer-controls { padding: 10px; background: #fff; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-    .btn-ctrl { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--navy); transition: 0.2s; }
-    .btn-ctrl:hover { background: var(--primary); color: white; }
-    .section-title { font-size: 1rem; font-weight: 700; color: var(--primary-dark); margin: 20px 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; border-left: 4px solid var(--primary); padding-left: 8px; }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
-    .form-group input, .form-group textarea { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border 0.2s; }
-    .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .drop-zone { border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .drop-zone:hover { background: #f1f5f9; border-color: var(--primary); }
-    .capture-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; }
-    .capture-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fff; }
-    .img-box { width: 100%; height: 130px; border-radius: 8px; background: #f1f5f9; object-fit: cover; cursor: zoom-in; border: 1px solid var(--border); transition: transform 0.2s; }
-    .img-box:hover { transform: scale(1.02); }
-    .modal-zoom { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
-    .modal-zoom img { max-width: 90%; max-height: 85vh; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .actions-bar { grid-column: 1 / -1; display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
-    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
-    .btn-wa { background: var(--success); color: white; }
-    .btn-pdf { background: var(--primary); color: white; }
-    .btn:hover { opacity: 0.9; }
-    @media print { body { background: white; padding: 0; } .app-container { border: none; box-shadow: none; } .drop-zone, .viewer-controls, .actions-bar, input[type="file"] { display: none !important; } #canvas3D { height: 280px; } }
+    :root { --primary:#0284c7; --primary-dark:#0369a1; --navy:#0f172a; --text:#334155; --bg:#f8fafc; --card-bg:#ffffff; --border:#e2e8f0; --success:#25d366; }
+    * { box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); margin:0; padding:15px; }
+    .app-container { max-width:1100px; margin:0 auto; background:var(--card-bg); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.05); border:1px solid var(--border); overflow:hidden; }
+    .header { background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); color:#fff; padding:20px 30px; }
+    .header h1 { margin:0; font-size:1.5rem; color:#38bdf8; }
+    .header p { margin:4px 0 0; color:#94a3b8; font-size:.9rem; }
+    .main-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:25px; }
+    @media (max-width:850px) { .main-grid { grid-template-columns:1fr; padding:15px; } }
+    .viewer-card { background:#f1f5f9; border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+    .viewer-header { background:#e2e8f0; padding:10px 15px; font-weight:700; font-size:.9rem; color:var(--navy); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+    #canvas3D { width:100%; height:380px; background:radial-gradient(circle,#fff 0%,#cbd5e1 100%); display:block; touch-action:none; }
+    .viewer-controls { padding:10px; background:#fff; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .btn-ctrl { background:#f1f5f9; border:1px solid var(--border); padding:6px 12px; border-radius:6px; font-size:.8rem; font-weight:600; cursor:pointer; color:var(--navy); transition:.2s; }
+    .btn-ctrl:hover { background:var(--primary); color:#fff; }
+    .section-title { font-size:1rem; font-weight:700; color:var(--primary-dark); margin:20px 0 12px; text-transform:uppercase; letter-spacing:.5px; border-left:4px solid var(--primary); padding-left:8px; }
+    .form-group { display:flex; flex-direction:column; margin-bottom:12px; }
+    .form-group label { font-size:.85rem; font-weight:600; color:var(--navy); margin-bottom:4px; }
+    .form-group input, .form-group textarea { padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:.9rem; outline:none; transition:border .2s; font-family:inherit; }
+    .form-group input:focus, .form-group textarea:focus { border-color:var(--primary); }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:500px) { .grid-2 { grid-template-columns:1fr; } }
+    .drop-zone { border:2px dashed #cbd5e1; background:#f8fafc; border-radius:10px; padding:15px; text-align:center; cursor:pointer; transition:.2s; }
+    .drop-zone:hover { background:#f1f5f9; border-color:var(--primary); }
+    .capture-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; margin-top:10px; }
+    .capture-card { border:1px solid var(--border); border-radius:10px; padding:10px; background:#fff; }
+    .img-box { width:100%; height:130px; border-radius:8px; background:#f1f5f9; object-fit:cover; cursor:zoom-in; border:1px solid var(--border); }
+    .modal-zoom { display:none; position:fixed; inset:0; background:rgba(15,23,42,.9); z-index:9999; justify-content:center; align-items:center; padding:20px; }
+    .modal-zoom img { max-width:90%; max-height:85vh; border-radius:10px; }
+    .actions-bar { grid-column:1 / -1; display:flex; gap:12px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); flex-wrap:wrap; }
+    .btn { flex:1; min-width:220px; padding:14px; border:none; border-radius:10px; font-weight:700; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .2s; }
+    .btn:disabled { opacity:.6; cursor:wait; }
+    .btn-wa { background:var(--success); color:#fff; }
+    .btn-pdf { background:var(--primary); color:#fff; }
+    .btn:hover { opacity:.9; }
+    .hint { font-size:.8rem; color:#64748b; margin:6px 0 0; }
+    @media print { body { background:#fff; padding:0; } .app-container { border:none; box-shadow:none; } .drop-zone, .viewer-controls, .actions-bar, input[type="file"] { display:none !important; } #canvas3D { height:280px; } }
   </style>
 </head>
 <body>
@@ -71,14 +62,14 @@
       <div class="section-title">1. Modelo Intraoral 3D (.PLY)</div>
       <div class="drop-zone" onclick="document.getElementById('file3D').click()">
         <strong>📁 Cargar Archivo 3D del Escáner Straumann</strong>
-        <p style="margin:4px 0 0 0; font-size:0.8rem; color:#64748b;">Soporta archivos .PLY colorizados con máxima nitidez</p>
-        <input type="file" id="file3D" accept=".ply,.stl,.obj" style="display:none" onchange="cargarArchivo3D(event)">
+        <p style="margin:4px 0 0; font-size:.8rem; color:#64748b;">Solo archivos .PLY</p>
+        <input type="file" id="file3D" accept=".ply" style="display:none" onchange="cargarArchivo3D(event)">
       </div>
 
-      <div class="viewer-card" style="margin-top: 15px;">
+      <div class="viewer-card" style="margin-top:15px;">
         <div class="viewer-header">
           <span>Vista Tridimensional en Tiempo Real</span>
-          <span id="plyStatus" style="font-size:0.75rem; color:#0284c7;">Modelo anatómico de prueba</span>
+          <span id="plyStatus" style="font-size:.75rem; color:#0284c7;">Modelo anatómico de prueba</span>
         </div>
         <canvas id="canvas3D"></canvas>
         <div class="viewer-controls">
@@ -94,89 +85,93 @@
       <div class="section-title">2. Datos de la Consulta</div>
       <div class="grid-2">
         <div class="form-group">
-          <label>Nombre del Paciente:</label>
-          <input type="text" id="pacienteNombre" placeholder="Ej. Juan Pérez" value="Paciente de Ejemplo">
+          <label for="pacienteNombre">Nombre del Paciente:</label>
+          <input type="text" id="pacienteNombre" placeholder="Ej. Juan Pérez">
         </div>
         <div class="form-group">
-          <label>WhatsApp (Perú +51):</label>
-          <input type="tel" id="pacienteWA" placeholder="987654321" maxlength="9">
+          <label for="pacienteWA">WhatsApp (Perú +51):</label>
+          <input type="tel" id="pacienteWA" placeholder="987654321" maxlength="11">
         </div>
         <div class="form-group">
-          <label>DNI / Edad:</label>
+          <label for="pacienteDNI">DNI / Edad:</label>
           <input type="text" id="pacienteDNI" placeholder="70123456 / 30 años">
         </div>
         <div class="form-group">
-          <label>Fecha de Escaneo:</label>
+          <label for="fechaEscaneo">Fecha de Escaneo:</label>
           <input type="date" id="fechaEscaneo">
         </div>
       </div>
 
       <div class="section-title">3. Resumen Diagnóstico</div>
       <div class="form-group">
-        <label>Explicación para el Paciente:</label>
+        <label for="resumenClinico">Explicación para el Paciente:</label>
         <textarea id="resumenClinico" rows="4">El escaneo 3D muestra una excelente estructura ósea y alineación general. Se observa una leve acumulación de sarro en el sector anteroinferior y una incipiente caries oclusal en la pieza 16.</textarea>
       </div>
 
       <div class="grid-2">
         <div class="form-group">
-          <label>Nombre del Odontólogo:</label>
+          <label for="docNombre">Nombre del Odontólogo:</label>
           <input type="text" id="docNombre" value="Dr. Miguel Ángel">
         </div>
         <div class="form-group">
-          <label>Colegiatura (C.O.P.):</label>
+          <label for="docCOP">Colegiatura (C.O.P.):</label>
           <input type="text" id="docCOP" value="C.O.P. N° 12345">
         </div>
       </div>
     </div>
 
-    <div style="grid-column: 1 / -1;">
+    <div style="grid-column:1 / -1;">
       <div class="section-title">4. Capturas Intraorales & Hallazgos Específicos</div>
       <div class="capture-grid">
         <div class="capture-card">
-          <img id="prev1" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 1</text></svg>" onclick="abrirZoom(this.src)">
-          <input type="file" accept="image/*" onchange="cargarImagen2D(event, 'prev1')" style="margin: 8px 0; font-size: 0.75rem;">
+          <img id="prev1" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 1</text></svg>" onclick="abrirZoom(this.src)" alt="Captura 1">
+          <input type="file" accept="image/jpeg,image/png,image/webp" onchange="cargarImagen2D(event, 'prev1')" style="margin:8px 0; font-size:.75rem;">
           <div class="form-group"><input type="text" id="hallazgo1" value="Arcada Superior - Alineación General"></div>
         </div>
 
         <div class="capture-card">
-          <img id="prev2" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 2</text></svg>" onclick="abrirZoom(this.src)">
-          <input type="file" accept="image/*" onchange="cargarImagen2D(event, 'prev2')" style="margin: 8px 0; font-size: 0.75rem;">
+          <img id="prev2" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 2</text></svg>" onclick="abrirZoom(this.src)" alt="Captura 2">
+          <input type="file" accept="image/jpeg,image/png,image/webp" onchange="cargarImagen2D(event, 'prev2')" style="margin:8px 0; font-size:.75rem;">
           <div class="form-group"><input type="text" id="hallazgo2" value="Arcada Inferior - Revisión periodontal"></div>
         </div>
 
         <div class="capture-card">
-          <img id="prev3" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 3</text></svg>" onclick="abrirZoom(this.src)">
-          <input type="file" accept="image/*" onchange="cargarImagen2D(event, 'prev3')" style="margin: 8px 0; font-size: 0.75rem;">
+          <img id="prev3" class="img-box" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='130' fill='%23cbd5e1'><text x='50%' y='50%'>Captura 3</text></svg>" onclick="abrirZoom(this.src)" alt="Captura 3">
+          <input type="file" accept="image/jpeg,image/png,image/webp" onchange="cargarImagen2D(event, 'prev3')" style="margin:8px 0; font-size:.75rem;">
           <div class="form-group"><input type="text" id="hallazgo3" value="Zona Específica - Pieza 16"></div>
         </div>
       </div>
     </div>
 
     <div class="actions-bar">
-      <button class="btn btn-wa" onclick="guardarYEnviarWhatsApp()">💬 Enviar Link al Paciente por WhatsApp</button>
+      <div style="flex-basis:100%;">
+        <button class="btn btn-wa" id="btnEnviar" onclick="guardarYEnviarWhatsApp()">💬 Enviar Link al Paciente por WhatsApp</button>
+        <p class="hint">Se guarda el informe en el servidor y se abre WhatsApp con el enlace del paciente.</p>
+      </div>
       <button class="btn btn-pdf" onclick="window.print()">📄 Descargar / Imprimir Informe PDF</button>
     </div>
   </div>
 </div>
 
-<div id="modalZoom" class="modal-zoom" onclick="cerrarZoom()"><img id="imgZoom" src=""></div>
+<div id="modalZoom" class="modal-zoom" onclick="cerrarZoom()"><img id="imgZoom" src="" alt=""></div>
 
 <script>
   document.getElementById('fechaEscaneo').valueAsDate = new Date();
   let scene, camera, renderer, controls, currentMesh, autoRotate = true;
-  let raw3DData = null;
+  let archivo3D = null;
+  const archivosImg = {};
 
   function init3D() {
     const canvas = document.getElementById('canvas3D');
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf8fafc);
 
-    camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 5000);
     camera.position.set(0, 0, 80);
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
 
     scene.add(new THREE.DirectionalLight(0xffffff, 1.3).position.set(10, 20, 20));
     scene.add(new THREE.DirectionalLight(0xffffff, 0.8).position.set(-10, -20, -20));
@@ -188,7 +183,17 @@
     controls.dampingFactor = 0.05;
 
     crearModeloProceduralPrueba();
+    window.addEventListener('resize', ajustarTamano);
+    ajustarTamano();
     animate();
+  }
+
+  function ajustarTamano() {
+    const canvas = document.getElementById('canvas3D');
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = (w / h) || 1;
+    camera.updateProjectionMatrix();
   }
 
   function animate() {
@@ -218,12 +223,21 @@
   function cargarArchivo3D(event) {
     const file = event.target.files[0];
     if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.ply')) {
+      alert('Solo se aceptan archivos .PLY');
+      event.target.value = '';
+      return;
+    }
+    archivo3D = file;
+    document.getElementById('plyStatus').innerText = 'Cargando: ' + file.name;
     const reader = new FileReader();
-    document.getElementById('plyStatus').innerText = "Cargando: " + file.name;
-    
-    reader.onload = function(e) {
-      raw3DData = e.target.result;
-      parseAndShowPLY(raw3DData);
+    reader.onload = e => {
+      try {
+        parseAndShowPLY(e.target.result);
+      } catch (err) {
+        document.getElementById('plyStatus').innerText = 'No se pudo leer el PLY';
+        archivo3D = null;
+      }
     };
     reader.readAsArrayBuffer(file);
   }
@@ -231,94 +245,101 @@
   function parseAndShowPLY(buffer) {
     const loader = new THREE.PLYLoader();
     const geometry = loader.parse(buffer);
-    geometry.computeVertexNormals();
-    geometry.center();
-
-    let material;
-    if (geometry.attributes.color) {
-      material = new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        roughness: 0.2,
-        metalness: 0.0
-      });
-    } else {
-      material = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.2,
-        metalness: 0.05
-      });
-    }
+    geometry.computeBoundingSphere();
+    const s = geometry.boundingSphere;
+    const r = s.radius || 1;
+    geometry.translate(-s.center.x, -s.center.y, -s.center.z);
+    const hasColor = !!geometry.attributes.color;
 
     if (currentMesh) scene.remove(currentMesh);
-    currentMesh = new THREE.Mesh(geometry, material);
+    if (!geometry.index) {
+      currentMesh = new THREE.Points(geometry, new THREE.PointsMaterial({ size: r * 0.015, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x0284c7 }));
+    } else {
+      geometry.computeVertexNormals();
+      currentMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xe2e8f0, roughness: 0.35 }));
+    }
     scene.add(currentMesh);
-    resetCamara('frontal');
-    document.getElementById('plyStatus').innerText = "Modelo PLY cargado con éxito";
+    const d = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
+    camera.near = r / 100;
+    camera.far = d * 10;
+    camera.position.set(0, 0, d * 1.1);
+    camera.updateProjectionMatrix();
+    controls.target.set(0, 0, 0);
+    controls.update();
+    autoRotate = false;
+    document.getElementById('plyStatus').innerText = 'Modelo PLY cargado con éxito';
   }
 
   function resetCamara(v) {
     autoRotate = false;
     if (!currentMesh) return;
-    if (v === 'superior') camera.position.set(0, 80, 0);
-    if (v === 'inferior') camera.position.set(0, -80, 0);
-    if (v === 'frontal') camera.position.set(0, 0, 80);
+    const d = camera.position.length() || 80;
+    if (v === 'superior') camera.position.set(0, d, 0);
+    if (v === 'inferior') camera.position.set(0, -d, 0);
+    if (v === 'frontal') camera.position.set(0, 0, d);
     camera.lookAt(0, 0, 0);
   }
 
   function toggleRotacion() { autoRotate = !autoRotate; }
 
   function cargarImagen2D(event, imgId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Solo imágenes JPG, PNG o WEBP');
+      event.target.value = '';
+      return;
+    }
+    archivosImg[imgId] = file;
     const reader = new FileReader();
     reader.onload = () => document.getElementById(imgId).src = reader.result;
-    if (event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
+    reader.readAsDataURL(file);
   }
 
   function abrirZoom(src) { document.getElementById('imgZoom').src = src; document.getElementById('modalZoom').style.display = 'flex'; }
   function cerrarZoom() { document.getElementById('modalZoom').style.display = 'none'; }
 
-  function guardarYEnviarWhatsApp() {
+  async function guardarYEnviarWhatsApp() {
     const nombre = document.getElementById('pacienteNombre').value.trim();
-    let telefono = document.getElementById('pacienteWA').value.trim();
-    if (!nombre || !telefono) { alert("Ingrese nombre y número de WhatsApp del paciente."); return; }
+    let telefono = document.getElementById('pacienteWA').value.replace(/\D/g, '');
+    if (!nombre || !telefono) { alert('Ingrese nombre y número de WhatsApp del paciente.'); return; }
     if (!telefono.startsWith('51')) telefono = '51' + telefono;
 
-    const pacienteID = 'paciente_' + Date.now();
+    // Se abre la ventana antes del await para que el navegador no la bloquee
+    const win = window.open('', '_blank');
+    const btn = document.getElementById('btnEnviar');
+    btn.disabled = true;
+    btn.textContent = 'Guardando informe...';
 
-    const datosPaciente = {
-      nombre: nombre,
-      dni: document.getElementById('pacienteDNI').value,
-      fecha: document.getElementById('fechaEscaneo').value,
-      resumen: document.getElementById('resumenClinico').value,
-      docNombre: document.getElementById('docNombre').value,
-      docCOP: document.getElementById('docCOP').value,
-      img1: document.getElementById('prev1').src,
-      desc1: document.getElementById('hallazgo1').value,
-      img2: document.getElementById('prev2').src,
-      desc2: document.getElementById('hallazgo2').value,
-      img3: document.getElementById('prev3').src,
-      desc3: document.getElementById('hallazgo3').value,
-    };
+    const fd = new FormData();
+    fd.append('nombre', nombre);
+    fd.append('dni', document.getElementById('pacienteDNI').value);
+    fd.append('fecha', document.getElementById('fechaEscaneo').value);
+    fd.append('resumen', document.getElementById('resumenClinico').value);
+    fd.append('docNombre', document.getElementById('docNombre').value);
+    fd.append('docCOP', document.getElementById('docCOP').value);
+    fd.append('desc1', document.getElementById('hallazgo1').value);
+    fd.append('desc2', document.getElementById('hallazgo2').value);
+    fd.append('desc3', document.getElementById('hallazgo3').value);
+    if (archivo3D) fd.append('model', archivo3D, archivo3D.name);
+    ['prev1', 'prev2', 'prev3'].forEach((k, i) => { if (archivosImg[k]) fd.append('img' + (i + 1), archivosImg[k]); });
 
-    localStorage.setItem(pacienteID + '_datos', JSON.stringify(datosPaciente));
-
-    if (raw3DData) {
-      const blob = new Blob([raw3DData]);
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        localStorage.setItem(pacienteID + '_ply', e.target.result);
-        dispararWhatsApp(telefono, nombre, pacienteID);
-      };
-      reader.readAsDataURL(blob);
-    } else {
-      dispararWhatsApp(telefono, nombre, pacienteID);
+    try {
+      const r = await fetch('/api/pacientes', { method: 'POST', body: fd });
+      if (!r.ok) throw new Error(await r.text());
+      const { id } = await r.json();
+      const link = location.origin + '/paciente.html?id=' + id;
+      const doc = document.getElementById('docNombre').value;
+      const msg = 'Hola *' + nombre + '*, te saluda el ' + doc + '. 🦷\n\nAquí tienes el enlace exclusivo de tu diagnóstico dental e informe 3D:\n👉 ' + link + '\n\n¡Saludos!';
+      const url = 'https://api.whatsapp.com/send?phone=' + telefono + '&text=' + encodeURIComponent(msg);
+      if (win) win.location.href = url; else location.href = url;
+    } catch (err) {
+      if (win) win.close();
+      alert('No se pudo guardar el informe. Revise su conexión e intente de nuevo.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💬 Enviar Link al Paciente por WhatsApp';
     }
-  }
-
-  function dispararWhatsApp(telefono, nombre, pacienteID) {
-    const baseUrl = window.location.href.replace('principal.html', '').replace('index.html', '');
-    const urlPortal = baseUrl + 'paciente.html?id=' + pacienteID;
-    const mensaje = `Hola *${nombre}*, te saluda el Dr. ${document.getElementById('docNombre').value}. 🦷\n\nAquí tienes el enlace exclusivo de tu diagnóstico dental e informe 3D:\n👉 ${urlPortal}\n\n¡Saludos!`;
-    window.open(`https://api.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`, '_blank');
   }
 
   window.onload = init3D;
