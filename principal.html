@@ -156,17 +156,16 @@
  camera.position.set(0, 0, 80);
  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
- scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.1));
- const key = new THREE.DirectionalLight(0xffffff, 1.0);
+ scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.6));
+ const key = new THREE.DirectionalLight(0xffffff, 0.5);
  key.position.set(1, 2, 2);
  scene.add(key);
- const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+ const fill = new THREE.DirectionalLight(0xffffff, 0.2);
  fill.position.set(-2, 0, 1);
  scene.add(fill);
- const rim = new THREE.DirectionalLight(0x7dd3fc, 0.6);
+ const rim = new THREE.DirectionalLight(0x7dd3fc, 0.25);
  rim.position.set(0, -1, -2);
  scene.add(rim);
- scene.add(new THREE.AmbientLight(0xffffff, 0.25));
  controls = new THREE.OrbitControls(camera, renderer.domElement);
  controls.enableDamping = true;
  controls.dampingFactor = 0.05;
@@ -199,7 +198,7 @@
  c.width = c.height = 256;
  const g = c.getContext('2d');
  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
- gr.addColorStop(0, 'rgba(125,211,252,0.28)');
+ gr.addColorStop(0, 'rgba(125,211,252,0.18)');
  gr.addColorStop(1, 'rgba(125,211,252,0)');
  g.fillStyle = gr;
  g.fillRect(0, 0, 256, 256);
@@ -215,12 +214,12 @@
  function crearModeloProceduralPrueba() {
  if (currentMesh) scene.remove(currentMesh);
  const group = new THREE.Group();
- const gum = new THREE.Mesh(new THREE.TorusGeometry(20, 6, 16, 32, Math.PI), new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4 }));
+ const gum = new THREE.Mesh(new THREE.TorusGeometry(20, 6, 16, 32, Math.PI), new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.45 }));
  gum.rotation.x = Math.PI / 2;
  group.add(gum);
  for (let i = 0; i < 10; i++) {
  const angle = (i / 9) * Math.PI;
- const tooth = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.3, 7, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }));
+ const tooth = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.3, 7, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45 }));
  tooth.position.set(Math.cos(angle) * 20, Math.sin(angle) * 20, 0);
  tooth.rotation.z = angle - Math.PI / 2;
  group.add(tooth);
@@ -265,8 +264,8 @@
  currentMesh = new THREE.Mesh(geometry, new THREE.MeshPhysicalMaterial({
  vertexColors: hasColor,
  color: hasColor ? 0xffffff : 0xf5f1e8,
- roughness: 0.35, metalness: 0,
- clearcoat: 0.4, clearcoatRoughness: 0.2
+ roughness: 0.45, metalness: 0,
+ clearcoat: 0.2, clearcoatRoughness: 0.3
  }));
  }
  scene.add(currentMesh);
