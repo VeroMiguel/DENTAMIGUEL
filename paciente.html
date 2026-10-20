@@ -21,7 +21,7 @@ header p{margin:4px 0 0;color:#94a3b8;font-size:.95rem}
 .info label{display:block;font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase}
 .info span{font-weight:600;color:var(--navy)}
 h2{font-size:1.05rem;color:var(--pd);border-left:4px solid var(--p);padding-left:10px;margin:24px 0 10px}
-.viewer{position:relative;width:100%;height:clamp(280px,55vh,460px);background:radial-gradient(circle,#fff 0%,#cbd5e1 100%);border-radius:12px;border:1px solid var(--b);overflow:hidden}
+.viewer{position:relative;width:100%;height:clamp(300px,58vh,520px);background:#e9ecef;border-radius:12px;border:1px solid var(--b);overflow:hidden}
 canvas{width:100%;height:100%;display:block;touch-action:none}
 .tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.85);color:#fff;padding:5px 12px;border-radius:20px;font-size:.75rem;white-space:nowrap;pointer-events:none}
 .status{position:absolute;top:10px;left:10px;font-size:.8rem;background:#fff;padding:4px 10px;border-radius:8px;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08)}
@@ -36,7 +36,7 @@ footer strong{color:var(--navy);display:block}
 .zoom{display:none;position:fixed;inset:0;background:rgba(15,23,42,.92);z-index:9;align-items:center;justify-content:center;padding:16px}
 .zoom.on{display:flex}
 .zoom img{max-width:100%;max-height:90vh;border-radius:10px}
-@media (max-width:600px){.viewer{height:300px}footer{justify-content:center;text-align:center}}
+@media (max-width:600px){.viewer{height:320px}footer{justify-content:center;text-align:center}}
 </style>
 </head>
 <body>
@@ -46,7 +46,7 @@ footer strong{color:var(--navy);display:block}
 <div class="info">
 <div><label>Paciente</label><span id="pac">Cargando...</span></div>
 <div><label>Fecha de escaneo</label><span id="fecha">--</span></div>
-<div><label>Tecnología</label><span>Escáner intraoral Straumann</span></div>
+<div><label>Escáner</label><span>Straumann SIRIO X3</span></div>
 </div>
 <h2>🌐 Su modelo dental 3D</h2>
 <div class="viewer">
@@ -72,24 +72,25 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const canvas = $('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf8fafc);
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 5000);
-scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-const sun = new THREE.DirectionalLight(0xffffff, 1);
-sun.position.set(1, 2, 2);
-scene.add(sun);
+scene.background = new THREE.Color(0xe9ecef);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 5000);
+// Iluminación de estudio: luz difusa desde arriba y frente, sin sombras duras
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd6dbe2, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 0.6);
+key.position.set(0, 1, 2);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+fill.position.set(-1, -0.5, 1);
+scene.add(fill);
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 let modelo = null;
 let autoRotate = true;
 let reanudarTimer = null;
-// Pausa el giro mientras el paciente toca el modelo y lo reanuda después
-controls.addEventListener('start', () => {
- autoRotate = false;
- clearTimeout(reanudarTimer);
-});
+controls.addEventListener('start', () => { autoRotate = false; clearTimeout(reanudarTimer); });
 controls.addEventListener('end', () => {
  clearTimeout(reanudarTimer);
  reanudarTimer = setTimeout(() => autoRotate = true, 4000);
@@ -115,10 +116,19 @@ function mostrarModelo(geo) {
  const hasColor = !!geo.attributes.color;
  let obj;
  if (!geo.index) {
- obj = new THREE.Points(geo, new THREE.PointsMaterial({ size: r * 0.015, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x0284c7 }));
+ // Nube de puntos (sin caras): puntos finos para ver el detalle
+ obj = new THREE.Points(geo, new THREE.PointsMaterial({
+ size: r * 0.012, sizeAttenuation: true,
+ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xf3efe7
+ }));
  } else {
  geo.computeVertexNormals();
- obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xe2e8f0, roughness: 0.35 }));
+ // Material mate tipo resina dental: sin brillos fuertes
+ obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+ vertexColors: hasColor,
+ color: hasColor ? 0xffffff : 0xf3efe7,
+ roughness: 0.55, metalness: 0.0
+ }));
  }
  modelo = obj;
  scene.add(obj);
