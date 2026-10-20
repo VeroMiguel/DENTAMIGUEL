@@ -21,7 +21,7 @@ header p{margin:4px 0 0;color:#94a3b8;font-size:.95rem}
 .info label{display:block;font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase}
 .info span{font-weight:600;color:var(--navy)}
 h2{font-size:1.05rem;color:var(--pd);border-left:4px solid var(--p);padding-left:10px;margin:24px 0 10px}
-.viewer{position:relative;width:100%;height:clamp(300px,58vh,520px);background:radial-gradient(ellipse at center,#1e293b 0%,#020617 100%);border-radius:12px;border:1px solid var(--b);overflow:hidden}
+.viewer{position:relative;width:100%;height:clamp(300px,58vh,520px);background:radial-gradient(ellipse at 50% 40%,#1e293b 0%,#0b1120 60%,#020617 100%);border-radius:12px;border:1px solid var(--b);overflow:hidden}
 canvas{width:100%;height:100%;display:block;touch-action:none}
 .tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.85);color:#fff;padding:5px 12px;border-radius:20px;font-size:.75rem;white-space:nowrap;pointer-events:none}
 .status{position:absolute;top:10px;left:10px;font-size:.8rem;background:rgba(255,255,255,.95);padding:4px 10px;border-radius:8px;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.2)}
@@ -73,22 +73,28 @@ const canvas = $('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b1120);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 5000);
-// Iluminación de estudio: colores vivos, sin sombras duras
-scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.0));
-const key = new THREE.DirectionalLight(0xffffff, 0.9);
-key.position.set(0, 1, 2);
+// Iluminación de estudio de tres puntos + luz de contorno para marcar bordes
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 1.0);
+key.position.set(1, 2, 2);
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xffffff, 0.5);
-fill.position.set(-1, -0.5, 1);
+const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+fill.position.set(-2, 0, 1);
 scene.add(fill);
+const rim = new THREE.DirectionalLight(0x7dd3fc, 0.6);
+rim.position.set(0, -1, -2);
+scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
+controls.enablePan = false;
 let modelo = null;
 let autoRotate = true;
 let reanudarTimer = null;
+let distFinal = 80;
+let introT = 1;
 controls.addEventListener('start', () => { autoRotate = false; clearTimeout(reanudarTimer); });
 controls.addEventListener('end', () => {
  clearTimeout(reanudarTimer);
@@ -104,10 +110,35 @@ addEventListener('resize', resize);
 resize();
 (function loop() {
  requestAnimationFrame(loop);
+ if (introT < 1) {
+ // Entrada suave: la cámara se acerca al modelo
+ introT = Math.min(1, introT + 0.012);
+ const e = 1 - Math.pow(1 - introT, 3);
+ camera.position.z = distFinal * (1.5 - 0.5 * e);
+ }
  if (autoRotate && modelo) modelo.rotation.y += 0.005;
  controls.update();
  renderer.render(scene, camera);
 })();
+function crearSuelo(r) {
+ // Sombra suave debajo del modelo (sin sombras duras)
+ const c = document.createElement('canvas');
+ c.width = c.height = 256;
+ const g = c.getContext('2d');
+ const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+ gr.addColorStop(0, 'rgba(125,211,252,0.28)');
+ gr.addColorStop(1, 'rgba(125,211,252,0)');
+ g.fillStyle = gr;
+ g.fillRect(0, 0, 256, 256);
+ const tex = new THREE.CanvasTexture(c);
+ const m = new THREE.Mesh(
+ new THREE.PlaneGeometry(r * 3, r * 3),
+ new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+ );
+ m.rotation.x = -Math.PI / 2;
+ m.position.y = -r * 0.95;
+ return m;
+}
 function mostrarModelo(geo) {
  geo.computeBoundingSphere();
  const s = geo.boundingSphere, r = s.radius || 1;
@@ -115,20 +146,32 @@ function mostrarModelo(geo) {
  const hasColor = !!geo.attributes.color;
  let obj;
  if (!geo.index) {
- obj = new THREE.Points(geo, new THREE.PointsMaterial({ size: r * 0.012, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x7dd3fc }));
+ obj = new THREE.Points(geo, new THREE.PointsMaterial({
+ size: r * 0.012, sizeAttenuation: true,
+ vertexColors: hasColor, color: hasColor ? 0xffffff : 0x7dd3fc
+ }));
  } else {
- geo.computeVertexNormals();
- obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xf5f1e8, roughness: 0.4, metalness: 0 }));
+ if (!geo.attributes.normal) geo.computeVertexNormals();
+ // Material tipo esmalte: ligero brillo húmedo con capa transparente
+ obj = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+ vertexColors: hasColor,
+ color: hasColor ? 0xffffff : 0xf5f1e8,
+ roughness: 0.35, metalness: 0,
+ clearcoat: 0.4, clearcoatRoughness: 0.2
+ }));
  }
  modelo = obj;
  scene.add(obj);
+ scene.add(crearSuelo(r));
  const d = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
+ distFinal = d * 1.1;
  camera.near = r / 100;
  camera.far = d * 10;
- camera.position.set(0, 0, d * 1.1);
+ camera.position.set(0, 0, distFinal * 1.5);
  camera.updateProjectionMatrix();
  controls.target.set(0, 0, 0);
  controls.update();
+ introT = 0;
 }
 function pintarGaleria(d) {
  const g = $('galeria');
