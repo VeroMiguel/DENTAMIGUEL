@@ -74,18 +74,17 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 5000);
-// Iluminación de estudio de tres puntos + luz de contorno para marcar bordes
-scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 1.0);
+// Luz suave y equilibrada: sin sobreexposición
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 0.5);
 key.position.set(1, 2, 2);
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+const fill = new THREE.DirectionalLight(0xffffff, 0.2);
 fill.position.set(-2, 0, 1);
 scene.add(fill);
-const rim = new THREE.DirectionalLight(0x7dd3fc, 0.6);
+const rim = new THREE.DirectionalLight(0x7dd3fc, 0.25);
 rim.position.set(0, -1, -2);
 scene.add(rim);
-scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
@@ -111,7 +110,6 @@ resize();
 (function loop() {
  requestAnimationFrame(loop);
  if (introT < 1) {
- // Entrada suave: la cámara se acerca al modelo
  introT = Math.min(1, introT + 0.012);
  const e = 1 - Math.pow(1 - introT, 3);
  camera.position.z = distFinal * (1.5 - 0.5 * e);
@@ -121,12 +119,11 @@ resize();
  renderer.render(scene, camera);
 })();
 function crearSuelo(r) {
- // Sombra suave debajo del modelo (sin sombras duras)
  const c = document.createElement('canvas');
  c.width = c.height = 256;
  const g = c.getContext('2d');
  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
- gr.addColorStop(0, 'rgba(125,211,252,0.28)');
+ gr.addColorStop(0, 'rgba(125,211,252,0.18)');
  gr.addColorStop(1, 'rgba(125,211,252,0)');
  g.fillStyle = gr;
  g.fillRect(0, 0, 256, 256);
@@ -152,12 +149,11 @@ function mostrarModelo(geo) {
  }));
  } else {
  if (!geo.attributes.normal) geo.computeVertexNormals();
- // Material tipo esmalte: ligero brillo húmedo con capa transparente
  obj = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
  vertexColors: hasColor,
  color: hasColor ? 0xffffff : 0xf5f1e8,
- roughness: 0.35, metalness: 0,
- clearcoat: 0.4, clearcoatRoughness: 0.2
+ roughness: 0.45, metalness: 0,
+ clearcoat: 0.2, clearcoatRoughness: 0.3
  }));
  }
  modelo = obj;
