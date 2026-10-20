@@ -19,7 +19,7 @@
  @media (max-width:850px) { .main-grid { grid-template-columns:1fr; padding:15px; } }
  .viewer-card { background:#0f172a; border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
  .viewer-header { background:#1e293b; color:#e2e8f0; padding:10px 15px; font-weight:700; font-size:.9rem; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
- #canvas3D { width:100%; height:400px; background:radial-gradient(ellipse at center,#1e293b 0%,#020617 100%); display:block; touch-action:none; }
+ #canvas3D { width:100%; height:400px; background:radial-gradient(ellipse at 50% 40%,#1e293b 0%,#0b1120 60%,#020617 100%); display:block; touch-action:none; }
  .viewer-controls { padding:10px; background:#0f172a; border-top:1px solid #1e293b; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
  .btn-ctrl { background:#1e293b; border:1px solid #334155; padding:6px 12px; border-radius:6px; font-size:.8rem; font-weight:600; cursor:pointer; color:#e2e8f0; transition:.2s; }
  .btn-ctrl:hover { background:var(--primary); border-color:var(--primary); color:#fff; }
@@ -147,26 +147,30 @@
  document.getElementById('fechaEscaneo').valueAsDate = new Date();
  let scene, camera, renderer, controls, currentMesh, autoRotate = true;
  let archivo3D = null;
+ let distFinal = 80, introT = 1;
  const archivosImg = {};
  function init3D() {
  const canvas = document.getElementById('canvas3D');
  scene = new THREE.Scene();
- scene.background = new THREE.Color(0x0b1120);
  camera = new THREE.PerspectiveCamera(40, 1, 0.1, 5000);
  camera.position.set(0, 0, 80);
  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
- // Iluminación de estudio: colores vivos, sin sombras duras
- scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.0));
- const key = new THREE.DirectionalLight(0xffffff, 0.9);
- key.position.set(0, 1, 2);
+ scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.1));
+ const key = new THREE.DirectionalLight(0xffffff, 1.0);
+ key.position.set(1, 2, 2);
  scene.add(key);
- const fill = new THREE.DirectionalLight(0xffffff, 0.5);
- fill.position.set(-1, -0.5, 1);
+ const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+ fill.position.set(-2, 0, 1);
  scene.add(fill);
+ const rim = new THREE.DirectionalLight(0x7dd3fc, 0.6);
+ rim.position.set(0, -1, -2);
+ scene.add(rim);
+ scene.add(new THREE.AmbientLight(0xffffff, 0.25));
  controls = new THREE.OrbitControls(camera, renderer.domElement);
  controls.enableDamping = true;
  controls.dampingFactor = 0.05;
+ controls.enablePan = false;
  crearModeloProceduralPrueba();
  window.addEventListener('resize', ajustarTamano);
  ajustarTamano();
@@ -181,9 +185,32 @@
  }
  function animate() {
  requestAnimationFrame(animate);
+ if (introT < 1) {
+ introT = Math.min(1, introT + 0.012);
+ const e = 1 - Math.pow(1 - introT, 3);
+ camera.position.z = distFinal * (1.5 - 0.5 * e);
+ }
  if (autoRotate && currentMesh) currentMesh.rotation.y += 0.005;
  controls.update();
  renderer.render(scene, camera);
+ }
+ function crearSuelo(r) {
+ const c = document.createElement('canvas');
+ c.width = c.height = 256;
+ const g = c.getContext('2d');
+ const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+ gr.addColorStop(0, 'rgba(125,211,252,0.28)');
+ gr.addColorStop(1, 'rgba(125,211,252,0)');
+ g.fillStyle = gr;
+ g.fillRect(0, 0, 256, 256);
+ const tex = new THREE.CanvasTexture(c);
+ const m = new THREE.Mesh(
+ new THREE.PlaneGeometry(r * 3, r * 3),
+ new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+ );
+ m.rotation.x = -Math.PI / 2;
+ m.position.y = -r * 0.95;
+ return m;
  }
  function crearModeloProceduralPrueba() {
  if (currentMesh) scene.remove(currentMesh);
@@ -234,17 +261,25 @@
  if (!geometry.index) {
  currentMesh = new THREE.Points(geometry, new THREE.PointsMaterial({ size: r * 0.012, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x7dd3fc }));
  } else {
- geometry.computeVertexNormals();
- currentMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xf5f1e8, roughness: 0.4, metalness: 0 }));
+ if (!geometry.attributes.normal) geometry.computeVertexNormals();
+ currentMesh = new THREE.Mesh(geometry, new THREE.MeshPhysicalMaterial({
+ vertexColors: hasColor,
+ color: hasColor ? 0xffffff : 0xf5f1e8,
+ roughness: 0.35, metalness: 0,
+ clearcoat: 0.4, clearcoatRoughness: 0.2
+ }));
  }
  scene.add(currentMesh);
+ scene.add(crearSuelo(r));
  const d = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
+ distFinal = d * 1.1;
  camera.near = r / 100;
  camera.far = d * 10;
- camera.position.set(0, 0, d * 1.1);
+ camera.position.set(0, 0, distFinal * 1.5);
  camera.updateProjectionMatrix();
  controls.target.set(0, 0, 0);
  controls.update();
+ introT = 0;
  autoRotate = true;
  document.getElementById('plyStatus').innerText = 'Modelo PLY cargado con éxito';
  }
