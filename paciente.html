@@ -21,10 +21,10 @@ header p{margin:4px 0 0;color:#94a3b8;font-size:.95rem}
 .info label{display:block;font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase}
 .info span{font-weight:600;color:var(--navy)}
 h2{font-size:1.05rem;color:var(--pd);border-left:4px solid var(--p);padding-left:10px;margin:24px 0 10px}
-.viewer{position:relative;width:100%;height:clamp(300px,58vh,520px);background:#e9ecef;border-radius:12px;border:1px solid var(--b);overflow:hidden}
+.viewer{position:relative;width:100%;height:clamp(300px,58vh,520px);background:radial-gradient(ellipse at center,#1e293b 0%,#020617 100%);border-radius:12px;border:1px solid var(--b);overflow:hidden}
 canvas{width:100%;height:100%;display:block;touch-action:none}
 .tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.85);color:#fff;padding:5px 12px;border-radius:20px;font-size:.75rem;white-space:nowrap;pointer-events:none}
-.status{position:absolute;top:10px;left:10px;font-size:.8rem;background:#fff;padding:4px 10px;border-radius:8px;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.status{position:absolute;top:10px;left:10px;font-size:.8rem;background:rgba(255,255,255,.95);padding:4px 10px;border-radius:8px;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.2)}
 .summary{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;color:#166534}
 .summary h3{margin:0 0 6px;color:#15803d;font-size:1rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
@@ -72,16 +72,15 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const canvas = $('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputEncoding = THREE.sRGBEncoding;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xe9ecef);
+scene.background = new THREE.Color(0x0b1120);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 5000);
-// Iluminación de estudio: luz difusa desde arriba y frente, sin sombras duras
-scene.add(new THREE.HemisphereLight(0xffffff, 0xd6dbe2, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 0.6);
+// Iluminación de estudio: colores vivos, sin sombras duras
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.0));
+const key = new THREE.DirectionalLight(0xffffff, 0.9);
 key.position.set(0, 1, 2);
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+const fill = new THREE.DirectionalLight(0xffffff, 0.5);
 fill.position.set(-1, -0.5, 1);
 scene.add(fill);
 const controls = new THREE.OrbitControls(camera, canvas);
@@ -116,19 +115,10 @@ function mostrarModelo(geo) {
  const hasColor = !!geo.attributes.color;
  let obj;
  if (!geo.index) {
- // Nube de puntos (sin caras): puntos finos para ver el detalle
- obj = new THREE.Points(geo, new THREE.PointsMaterial({
- size: r * 0.012, sizeAttenuation: true,
- vertexColors: hasColor, color: hasColor ? 0xffffff : 0xf3efe7
- }));
+ obj = new THREE.Points(geo, new THREE.PointsMaterial({ size: r * 0.012, vertexColors: hasColor, color: hasColor ? 0xffffff : 0x7dd3fc }));
  } else {
  geo.computeVertexNormals();
- // Material mate tipo resina dental: sin brillos fuertes
- obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
- vertexColors: hasColor,
- color: hasColor ? 0xffffff : 0xf3efe7,
- roughness: 0.55, metalness: 0.0
- }));
+ obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: hasColor, color: hasColor ? 0xffffff : 0xf5f1e8, roughness: 0.4, metalness: 0 }));
  }
  modelo = obj;
  scene.add(obj);
