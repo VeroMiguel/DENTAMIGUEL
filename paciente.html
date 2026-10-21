@@ -314,6 +314,7 @@
  const nombre = document.getElementById('pacienteNombre').value.trim();
  let telefono = document.getElementById('pacienteWA').value.replace(/\D/g, '');
  if (!nombre || !telefono) { alert('Ingrese nombre y número de WhatsApp del paciente.'); return; }
+ if (!archivo3D) { alert('Cargue primero el archivo .PLY del escáner: el paciente lo verá en su enlace.'); return; }
  if (!telefono.startsWith('51')) telefono = '51' + telefono;
  // Se abre la ventana antes del await para que el navegador no la bloquee
  const win = window.open('', '_blank');
